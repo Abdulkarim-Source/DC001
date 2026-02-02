@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كويز الوثائق (النسخة النهائية) - Ahmed Abdul karim</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        
+        body { font-family: 'Cairo', sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid #000; }
+        
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px dashed #ccc; padding-bottom: 15px; }
+        .header h1 { margin: 0; color: #000; font-size: 26px; }
+        .header p { margin: 5px 0 0; color: #666; font-size: 14px; font-weight: bold; }
+        
+        .stats-bar { display: flex; justify-content: space-between; background: #333; color: #fff; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
+        
+        .q-box { font-size: 20px; font-weight: bold; margin-bottom: 20px; line-height: 1.6; color: #000; }
+        .icon { font-size: 24px; margin-left: 10px; vertical-align: middle; }
+        
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        .opt-btn { 
+            background: #fff; border: 2px solid #ddd; padding: 15px; font-size: 18px; 
+            border-radius: 10px; cursor: pointer; text-align: right; font-family: 'Cairo', sans-serif;
+            transition: all 0.2s; position: relative;
+        }
+        .opt-btn:hover { background: #f9f9f9; border-color: #999; }
+        
+        .opt-btn.correct { background: #d1e7dd; border-color: #0f5132; color: #0f5132; }
+        .opt-btn.wrong { background: #f8d7da; border-color: #842029; color: #842029; }
+        .opt-btn:disabled { cursor: default; opacity: 1; }
+
+        .explanation { 
+            margin-top: 20px; padding: 15px; background: #e2e3e5; border-radius: 8px; 
+            border-right: 5px solid #000; display: none; font-size: 16px;
+        }
+        .memory-key {
+            display: block; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ccc;
+            color: #004085; font-weight: bold;
+        }
+
+        .controls { margin-top: 25px; text-align: center; }
+        .btn-action { background: #000; color: #fff; border: none; padding: 12px 30px; font-size: 18px; border-radius: 50px; cursor: pointer; font-family: 'Cairo', sans-serif; }
+        .btn-action:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .pronunciation { color: #d63384; font-weight: bold; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>كويز وثائق المقاولات (الشامل)</h1>
+        <p>تم التصميم والإنشاء بواسطة: Ahmed Abdul karim</p>
+    </div>
+
+    <!-- شاشة البداية -->
+    <div id="start-screen" style="text-align: center; padding: 20px;">
+        <h3>مرحباً بك في المستوى الاحترافي 🚀</h3>
+        <p style="font-size: 18px; margin-bottom: 20px;">
+            هذا الاختبار مصمم لتبسيط المصطلحات الإنجليزية.<br>
+            سنستخدم <strong>"مفاتيح الحفظ"</strong> لمساعدتك.
+        </p>
+        <button class="btn-action" onclick="startQuiz()">ابدأ التحدي</button>
+    </div>
+
+    <!-- شاشة الأسئلة -->
+    <div id="quiz-screen" style="display: none;">
+        <div class="stats-bar">
+            <span>سؤال: <span id="curr-q">1</span> / <span id="total-q">0</span></span>
+            <span>النتيجة: <span id="score">0</span> ✅</span>
+        </div>
+        
+        <div class="q-box" id="question-text"></div>
+        <div class="options" id="options-container"></div>
+        
+        <div class="explanation" id="explanation-box">
+            <span id="exp-text"></span>
+            <span class="memory-key" id="mem-key"></span>
+        </div>
+
+        <div class="controls">
+            <button class="btn-action" id="next-btn" onclick="nextQuestion()" disabled>السؤال التالي ⬅️</button>
+        </div>
+    </div>
+
+    <!-- شاشة النهاية -->
+    <div id="end-screen" style="display: none; text-align: center; padding: 30px;">
+        <h2 style="color: #000;">انتهى الاختبار! 🏁</h2>
+        <div style="font-size: 24px; margin: 20px 0;">
+            درجتك النهائية: <strong id="final-score"></strong> من <strong id="final-total"></strong>
+        </div>
+        <p id="feedback-msg"></p>
+        <button class="btn-action" onclick="location.reload()">إعادة المحاولة 🔄</button>
+    </div>
+</div>
+
+<script>
+    // --- قاعدة البيانات الكاملة ---
+    const database = [
+    // --- المجموعة 1: المصطلحات الأساسية ---
+    {
+        icon: "📝",
+        q: "اختَر التعريف الصحيح لـ NCR = Non-Conformance Report [نون كونفورمانس ريبورت].",
+        o: ["تقرير عدم مطابقة (مخالفة)", "طلب اعتماد", "طلب عرض سعر", "محضر اجتماع"],
+        e: "يُستخدم عند اكتشاف عمل أو مادة غير مطابقة للمواصفات.",
+        k: "Non = لا / غير مطابق."
+    },
+    {
+        icon: "❓",
+        q: "ما المقصود بـ RFI (Request for Information) [ريكوست فور إنفورميشن]؟",
+        o: ["طلب معلومات/استيضاح", "طلب فحص أعمال", "طلب صب خرسانة", "نظام إدارة مبنى"],
+        e: "يُستخدم لطلب توضيح غموض في الرسومات من الاستشاري.",
+        k: "Information = معلومات."
+    },
+    {
+        icon: "👀",
+        q: "في بعض الجهات: RFI (Request for Inspection) [ريكوست فور إنسبكشن] معناها إيه؟",
+        o: ["طلب استلام/فحص أعمال", "طلب معلومات", "طلب فحص مواد", "محضر اجتماع"],
+        e: "يُستخدم في بعض الجهات كطلب فحص (بديل لـ WIR).",
+        k: "Inspection = فحص."
+    },
+    {
+        icon: "🏗️",
+        q: "اختَر التعريف الصحيح لـ IR = Inspection Request [إنسبكشن ريكويست].",
+        o: ["طلب فحص (عام)", "طلب اعتماد", "أمر شراء", "توجيهات عمل"],
+        e: "يُقدم للاستشاري لطلب فحص أعمال قبل الانتقال للمرحلة التالية.",
+        k: "Request = طلب."
+    },
+    {
+        icon: "🏗️",
+        q: "اختَر التعريف الصحيح لـ WIR = Work Inspection Request [وورك إنسبكشن].",
+        o: ["طلب فحص/استلام أعمال منفذة", "طلب عرض سعر", "جدول كميات", "نمذجة مبنى"],
+        e: "يُستخدم لطلب استلام بند أعمال محدد (نجارة، حدادة...).",
+        k: "Work = عمل/شغل."
+    },
+    {
+        icon: "✅",
+        q: "RFA = Request for Approval [ريكوست فور أبروفال] تُستخدم في إيه؟",
+        o: ["طلب اعتماد مواد/موردين", "طلب فحص مواد", "طلب صب خرسانة", "تأكيد قرار شفهي"],
+        e: "لاعتماد مواد أو موردين أو مستندات.",
+        k: "Approval = موافقة/اعتماد."
+    },
+    {
+        icon: "📁",
+        q: "Submittal [سابميتال] معناها إيه؟",
+        o: ["مستند تقديم للاعتماد", "خطاب إرسال", "طلب فحص", "طلب صب"],
+        e: "حزمة مستندات يقدمها المقاول للاعتماد (مواد، رسومات...).",
+        k: "Submit = يقدم."
+    },
+    {
+        icon: "📨",
+        q: "Transmittal [ترانسميتال] يُستخدم غالبًا لـ؟",
+        o: ["توثيق إرسال/استلام مستندات", "اعتماد مادة", "فحص مواد", "حل تناقض"],
+        e: "ورقة الغلاف التي تثبت أنك أرسلت المستندات رسمياً.",
+        k: "Transit = عبور/نقل."
+    },
+    {
+        icon: "🧱",
+        q: "MS = Material Submittal [ماتيريال سابميتال] يعني؟",
+        o: ["تقديم خامة/عينة للاعتماد", "طريقة تنفيذ", "طلب صب", "محضر اجتماع"],
+        e: "تقديم عينة أو كتالوج للمادة لاعتمادها قبل الشراء.",
+        k: "Material = مادة."
+    },
+    {
+        icon: "📖",
+        q: "M.S = Method Statement [ميثود ستيتمنت] يعني؟",
+        o: ["شرح طريقة تنفيذ بند/اختبار", "تقديم عينة", "طلب فحص", "توجيهات عمل"],
+        e: "مستند يشرح خطوات العمل وإجراءات السلامة.",
+        k: "Method = طريقة."
+    },
+    {
+        icon: "🚛",
+        q: "PR = Pouring Request [بورينج ريكويست] يتم رفعه إمتى؟",
+        o: ["قبل صب الخرسانة (بعد الفحص)", "بعد تركيب المواد", "بدل اعتماد المورد", "بدل المحضر"],
+        e: "إذن الصب بعد التأكد من جاهزية الحديد والشدة.",
+        k: "Pouring = صب."
+    },
+    {
+        icon: "🔍",
+        q: "MIR = Material Inspection Request [ماتيريال إنسبكشن] معناها؟",
+        o: ["طلب فحص مواد (وصلت الموقع)", "طلب معلومات", "طلب اعتماد", "تقرير يومي"],
+        e: "لفحص المواد عند وصولها للموقع (تشوين).",
+        k: "Material = مواد."
+    },
+    {
+        icon: "📅",
+        q: "CDR = Contractor Daily Report [ديلي ريبورت] يعني؟",
+        o: ["تقرير يومي من المقاول", "طلب فحص", "طلب اعتماد", "جدول كميات"],
+        e: "يوثق حركة الموقع اليومية (عمالة، معدات، إنجاز).",
+        k: "Daily = يومي."
+    },
+    {
+        icon: "👷",
+        q: "SWI = Site Work Instructions [سايت وورك] هو؟",
+        o: ["توجيهات عمل بالموقع (من الاستشاري)", "طلب اعتماد", "طلب فحص", "طلب صب"],
+        e: "تعليمات رسمية من الاستشاري للمقاول بالموقع.",
+        k: "Site = موقع."
+    },
+    {
+        icon: "🗣️",
+        q: "CVR = Confirmation Verbal Report [فيربال ريبورت] يُستخدم لـ؟",
+        o: ["تأكيد قرار شفهي كتابيًا", "إصدار أمر شراء", "اعتماد رسومات", "تحديث جدول"],
+        e: "لتوثيق أي اتفاق تم بالكلام (شفهياً).",
+        k: "Verbal = شفهي."
+    },
+    {
+        icon: "💰",
+        q: "PO = Purchase Order [بيرتشيز أوردر] يعني؟",
+        o: ["أمر شراء", "تعديل أمر شراء", "طلب عرض سعر", "طلب اعتماد"],
+        e: "مستند رسمي للتعاقد مع مورد وشراء مواد.",
+        k: "Purchase = شراء."
+    },
+    {
+        icon: "🔄",
+        q: "POA = Purchase Order Amendment [أميندمنت] يعني؟",
+        o: ["تعديل أمر شراء قائم", "أمر شراء جديد", "طلب فحص", "طلب صب"],
+        e: "لتغيير الكمية أو السعر في أمر شراء موجود.",
+        k: "Amendment = تعديل."
+    },
+    {
+        icon: "✅",
+        q: "PQP = Project Quality Plan [كواليتي بلان] هو؟",
+        o: ["خطة الجودة للمشروع", "طلب فحص", "طلب صب", "دعوة عطاء"],
+        e: "الخطة التي تحدد معايير الجودة في المشروع.",
+        k: "Quality = جودة."
+    },
+    {
+        icon: "📢",
+        q: "IFB = Invitation for Bid [إنفيتيشن فور بِد] معناها؟",
+        o: ["دعوة لتقديم عطاء/مناقصة", "طلب عرض سعر", "محضر اجتماع", "نمذجة مبنى"],
+        e: "دعوة رسمية للمقاولين لدخول المناقصة.",
+        k: "Invitation = دعوة."
+    },
+    {
+        icon: "💲",
+        q: "RFQ = Request for Quotation [كوتيشن] معناها؟",
+        o: ["طلب عرض سعر", "طلب فحص", "طلب صب", "توجيهات عمل"],
+        e: "سؤال الموردين عن أسعارهم.",
+        k: "Quotation = سعر/تثمين."
+    },
+    {
+        icon: "❓",
+        q: "TQ = Technical Query [تيكنيكال كويري] تُستخدم في إيه؟",
+        o: ["استفسار فني لحل غموض", "طلب فحص", "طلب صب", "أمر شراء"],
+        e: "استفسار متخصص لحل مشكلة فنية.",
+        k: "Query = تساؤل/استعلام."
+    },
+    {
+        icon: "📊",
+        q: "BOQ = Bill of Quantities [بي-أو-كيو] معناها؟",
+        o: ["جدول الكميات", "طلب عرض سعر", "طلب اعتماد", "محضر اجتماع"],
+        e: "قائمة البنود والكميات والأسعار.",
+        k: "Quantities = كميات."
+    },
+    {
+        icon: "💻",
+        q: "BIM = Building Information Modeling [بيم] معناها؟",
+        o: ["نمذجة معلومات البناء (رقمياً)", "تصميم عادي", "نظام إدارة", "تنفيذ"],
+        e: "عمل نموذج 3D ذكي للمبنى بالكمبيوتر.",
+        k: "Modeling = نمذجة."
+    },
+    {
+        icon: "🖥️",
+        q: "CAD = Computer-Aided Design [كاد] معناها؟",
+        o: ["التصميم بمساعدة الكمبيوتر (أوتوكاد)", "نمذجة", "نظام إدارة", "محضر"],
+        e: "الرسم الهندسي باستخدام الكمبيوتر.",
+        k: "Design = تصميم."
+    },
+    {
+        icon: "🎛️",
+        q: "BMS = Building Management System [بي-إم-إس] معناها؟",
+        o: ["نظام إدارة خدمات المبنى", "جدول كميات", "طلب فحص", "طلب صب"],
+        e: "النظام الذكي للتحكم في التكييف والإضاءة.",
+        k: "System = نظام."
+    },
+    {
+        icon: "👷‍♂️",
+        q: "CM = Construction Manager [سي-إم] معناها؟",
+        o: ["مدير الإنشاءات/الموقع", "طلب اعتماد", "محضر", "طلب فحص"],
+        e: "المسؤول عن إدارة العمليات في الموقع.",
+        k: "Manager = مدير."
+    },
+    {
+        icon: "📜",
+        q: "IFC = Issued for Construction [آي-إف-سي] تعني؟",
+        o: ["صالح للتنفيذ (رسومات معتمدة)", "تقرير مخالفة", "طلب اعتماد", "سجل تتبع"],
+        e: "النسخة النهائية المعتمدة من الرسومات للعمل بها.",
+        k: "Construction = تنفيذ/بناء."
+    },
+    {
+        icon: "🏗️",
+        q: "As-Built [آز-بِلت] معناها؟",
+        o: ["كما تم التنفيذ (الواقع)", "صالح للتنفيذ", "طلب فحص", "طلب اعتماد"],
+        e: "الرسومات التي ترسم بعد انتهاء العمل لتوثيق التغييرات.",
+        k: "Built = تم بناؤه."
+    },
+
+    // --- المجموعة 2: السيناريوهات العملية (تطبيق) ---
+    {
+        icon: "🚨",
+        q: "سيناريو: اكتشفت أن بند أعمال منفذ بمخالفة للمواصفة المعتمدة. تختار أي نموذج؟",
+        o: ["NCR (تقرير عدم مطابقة)", "RFA", "RFQ", "MOM"],
+        e: "لأن العمل خطأ، يجب فتح NCR.",
+        k: "Non-Conformance = عدم مطابقة."
+    },
+    {
+        icon: "🤔",
+        q: "سيناريو: عندك تعارض في الرسومات وتحتاج رد رسمي من الاستشاري. تختار؟",
+        o: ["RFI (Information) - طلب معلومات", "RFI (Inspection)", "PR", "PO"],
+        e: "للاستفسار عن معلومة غامضة.",
+        k: "Information = معلومة."
+    },
+    {
+        icon: "👀",
+        q: "سيناريو: محتاج تحديد موعد فحص واستلام بند قبل الإقفال (حسب بعض الأنظمة). تختار؟",
+        o: ["RFI (Inspection) - طلب فحص", "RFI (Information)", "RFQ", "BOQ"],
+        e: "بعض الشركات تستخدم RFI بمعنى Request for Inspection.",
+        k: "Inspection = فحص."
+    },
+    {
+        icon: "🧱",
+        q: "سيناريو: أعمال مخفية جاهزة للفحص قبل الردم. تختار؟",
+        o: ["IR - Inspection Request", "MIR", "RFA", "CDR"],
+        e: "طلب فحص للأعمال المنفذة.",
+        k: "Inspection = فحص."
+    },
+    {
+        icon: "🚪",
+        q: "سيناريو: تريد استلام بند نجارة قبل الصب. تختار؟",
+        o: ["WIR - Work Inspection", "MS", "TQ", "BMS"],
+        e: "طلب فحص عمل (Work) محدد.",
+        k: "Work = عمل."
+    },
+    {
+        icon: "✅",
+        q: "سيناريو: تريد اعتماد مادة السيراميك قبل الشراء. تختار؟",
+        o: ["RFA - Request for Approval", "PO", "NCR", "MOM"],
+        e: "طلب موافقة (اعتماد) على المادة.",
+        k: "Approval = موافقة."
+    },
+    {
+        icon: "📄",
+        q: "سيناريو: تريد رفع كتالوج وداتا شيت لاعتماد خامة. تختار؟",
+        o: ["MS - Material Submittal", "Method Statement", "CVR", "CDR"],
+        e: "تقديم مواصفات المادة.",
+        k: "Material = مادة."
+    },
+    {
+        icon: "🛠️",
+        q: "سيناريو: تريد شرح خطوات تنفيذ العزل وإجراءات السلامة. تختار؟",
+        o: ["Method Statement", "Material Submittal", "RFQ", "IFB"],
+        e: "بيان طريقة العمل.",
+        k: "Method = طريقة."
+    },
+    {
+        icon: "🚛",
+        q: "سيناريو: قبل صب خرسانة، تريد إذن الصب. تختار؟",
+        o: ["PR - Pouring Request", "MIR", "BOQ", "SWI"],
+        e: "طلب صب.",
+        k: "Pouring = صب."
+    },
+    {
+        icon: "📦",
+        q: "سيناريو: الحديد وصل الموقع وتحتاج تفحصه. تختار؟",
+        o: ["MIR - Material Inspection", "IR", "RFI", "POA"],
+        e: "فحص مواد (Material) واردة.",
+        k: "Material = مادة."
+    },
+    {
+        icon: "📝",
+        q: "سيناريو: تريد توثيق عدد العمال والمعدات اليوم. تختار؟",
+        o: ["CDR - Daily Report", "MOM", "NCR", "RFA"],
+        e: "التقرير اليومي.",
+        k: "Daily = يومي."
+    },
+    {
+        icon: "👷",
+        q: "سيناريو: الاستشاري أصدر تعليمات رسمية بتعديل بالموقع. تختار؟",
+        o: ["SWI - Site Instructions", "CVR", "BOQ", "IFB"],
+        e: "تعليمات الموقع.",
+        k: "Instruction = تعليمات."
+    },
+    {
+        icon: "🗣️",
+        q: "سيناريو: تم الاتفاق شفهيًا على قرار وتريد تثبيته. تختار؟",
+        o: ["CVR - Confirmation Verbal", "MOM", "RFI", "MIR"],
+        e: "تأكيد الشفهي.",
+        k: "Verbal = شفهي."
+    },
+    {
+        icon: "💰",
+        q: "سيناريو: تريد إصدار أمر شراء رسمي لمورد. تختار؟",
+        o: ["PO - Purchase Order", "POA", "RFQ", "NCR"],
+        e: "أمر شراء.",
+        k: "Purchase = شراء."
+    },
+    {
+        icon: "🔄",
+        q: "سيناريو: تريد تعديل الكمية في أمر الشراء. تختار؟",
+        o: ["POA - Amendment", "PO", "RFA", "PR"],
+        e: "تعديل (Amendment).",
+        k: "Amendment = تعديل."
+    },
+    {
+        icon: "📢",
+        q: "سيناريو: المالك يدعو المقاولين لتقديم عروض. تختار؟",
+        o: ["IFB - Invitation for Bid", "RFQ", "RFI", "WIR"],
+        e: "دعوة للمناقصة.",
+        k: "Bid = مناقصة/عطاء."
+    },
+    {
+        icon: "💲",
+        q: "سيناريو: تريد طلب عرض سعر من مورد. تختار؟",
+        o: ["RFQ - Request for Quotation", "IFB", "NCR", "SWI"],
+        e: "طلب تسعير.",
+        k: "Quotation = سعر."
+    },
+    {
+        icon: "🤔",
+        q: "ما الفرق بين RFI (Info) و RFI (Insp)؟",
+        o: ["الأولى لمعلومة، الثانية لفحص", "الأولى لفحص، الثانية لصب", "الأولى لشراء، الثانية لتعديل", "لا يوجد فرق"],
+        e: "الفرق في الغرض: معلومة vs فحص.",
+        k: "Info = معلومة / Insp = فحص."
+    },
+    {
+        icon: "⚖️",
+        q: "ما الفرق بين MS (Material) و Method Statement؟",
+        o: ["MS للمادة، Method للطريقة", "MS للطريقة، Method للمادة", "الاثنين واحد", "للمشتريات"],
+        e: "واحد يعتمد الخامة، وواحد يشرح طريقة التركيب.",
+        k: "Material = خامة."
+    },
+    {
+        icon: "📨",
+        q: "ما الفرق بين Submittal و Transmittal؟",
+        o: ["Submittal للاعتماد، Transmittal للإرسال", "Submittal للإرسال، Transmittal للاعتماد", "الاثنين نفس الشيء", "للصب والفحص"],
+        e: "Submittal هو المحتوى، Transmittal هو وسيلة النقل.",
+        k: "Transmit = ينقل."
+    },
+    {
+        icon: "💰",
+        q: "ما الفرق بين PO و POA؟",
+        o: ["PO أمر جديد، POA تعديل عليه", "PO تعديل، POA جديد", "للتسعير", "للاجتماع"],
+        e: "POA هو تعديل لأمر الشراء الأصلي.",
+        k: "Amendment = تعديل."
+    },
+    {
+        icon: "❓",
+        q: "سيناريو: عندك تناقض فني بين مخطط ومواصفة. تختار؟",
+        o: ["TQ - Technical Query", "RFI (Insp)", "MIR", "PO"],
+        e: "استفسار فني متخصص.",
+        k: "Technical = فني."
+    },
+    {
+        icon: "🤝",
+        q: "سيناريو: عاوز تثبت قرارات اجتماع رسمياً. تختار؟",
+        o: ["MOM - Minutes of Meeting", "CVR", "NCR", "RFQ"],
+        e: "محضر الاجتماع.",
+        k: "Meeting = اجتماع."
+    },
+    {
+        icon: "🗣️",
+        q: "سيناريو: قرار اتقال شفهي بالموقع وعاوز تأكيده. تختار؟",
+        o: ["CVR - Confirmation Verbal", "MOM", "IFB", "BOQ"],
+        e: "تقرير تأكيد شفهي.",
+        k: "Verbal = شفهي."
+    },
+    {
+        icon: "🏗️",
+        q: "في الوثائق: WIR يترفع عادة قبل إيه؟",
+        o: ["قبل إقفال البند (التغطية)", "بعد PO", "بعد BMS", "بعد BIM"],
+        e: "قبل ما تغطي الشغل، لازم يتفحص.",
+        k: "Work Inspection."
+    },
+    {
+        icon: "📦",
+        q: "في الوثائق: MIR يترفع إمتى؟",
+        o: ["عند وصول المواد للموقع", "بعد الصب", "قبل المناقصة", "بعد الاجتماع"],
+        e: "أول ما العربية تنزل المواد.",
+        k: "Material Inspection."
+    },
+    {
+        icon: "📧",
+        q: "سيناريو: عايز تبعت 5 مستندات ومعاك قائمة مرفقات. تختار؟",
+        o: ["Transmittal [ترانسميتال]", "Submittal", "NCR", "PQP"],
+        e: "عشان تثبت إنك سلمتهم.",
+        k: "Transmittal = إرسال."
+    },
+    {
+        icon: "📂",
+        q: "سيناريو: عايز ترفع كتالوج وشهادات للاعتماد. تختار؟",
+        o: ["Submittal [سابميتال]", "Transmittal", "CDR", "CM"],
+        e: "حزمة الاعتماد.",
+        k: "Submit = تقديم."
+    },
+    {
+        icon: "📊",
+        q: "سيناريو: محتاج ترجع لجدول الكميات لحساب بند. تختار؟",
+        o: ["BOQ", "BIM", "BMS", "MIR"],
+        e: "جدول الكميات.",
+        k: "Bill of Quantities."
+    },
+    {
+        icon: "🖥️",
+        q: "سيناريو: محتاج تعمل رسمة أو تعدل مخطط. تختار؟",
+        o: ["CAD", "BIM", "IFB", "PQP"],
+        e: "الرسم بالكمبيوتر.",
+        k: "Computer Aided Design."
+    },
+    {
+        icon: "🌡️",
+        q: "سيناريو: محتاج تتابع التكييف والإنذار بنظام تحكم. تختار؟",
+        o: ["BMS", "BIM", "BOQ", "RFQ"],
+        e: "نظام إدارة المبنى.",
+        k: "Building Management."
+    },
+    {
+        icon: "👔",
+        q: "سيناريو: مين الشخص المسؤول عن إدارة البناء بالمشروع؟",
+        o: ["CM (Construction Manager)", "CDR", "CVR", "CAD"],
+        e: "مدير الإنشاءات.",
+        k: "Manager = مدير."
+    },
+    {
+        icon: "🚫",
+        q: "سيناريو: تم تركيب مادة غير معتمدة. أول إجراء؟",
+        o: ["NCR (مخالفة)", "RFQ", "IFB", "CAD"],
+        e: "تقرير عدم مطابقة.",
+        k: "Non-Conformance."
+    },
+    {
+        icon: "❓",
+        q: "سيناريو: لاحظت غموض في مخطط يسبب خطأ تنفيذ. تختار؟",
+        o: ["RFI (Information)", "RFI (Inspection)", "PR", "MIR"],
+        e: "طلب معلومة.",
+        k: "Information = معلومة."
+    },
+
+    // --- المجموعة 3: المصطلحات الجديدة والإضافية ---
+    {
+        icon: "📂",
+        q: "ما هو PQD (Prequalification Document) [بي-كيو-دي]؟",
+        o: ["ملف التأهيل المسبق للشركة", "طلب سلفة", "طلب فحص", "تقرير يومي"],
+        e: "يثبت قدرة الشركة قبل دخول المناقصة.",
+        k: "Qualification = مؤهلات."
+    },
+    {
+        icon: "🏢",
+        q: "ما هو Company Profile [بروفايل]؟",
+        o: ["ملف تعريف الشركة وإنجازاتها", "مخطط تنفيذي", "جدول كميات", "خطاب ترسية"],
+        e: "السيرة الذاتية للشركة.",
+        k: "Profile = ملف شخصي."
+    },
+    {
+        icon: "📜",
+        q: "ما هو Trade License / CR [سي-آر]؟",
+        o: ["السجل التجاري", "شهادة ضمان", "خطة سلامة", "إيصال"],
+        e: "الرخصة التجارية للشركة.",
+        k: "License = رخصة."
+    },
+    {
+        icon: "🏆",
+        q: "ما هي ISO Certificates [آيزو]؟",
+        o: ["شهادات الجودة العالمية", "رخصة قيادة", "تصريح عمل", "عقد"],
+        e: "شهادات 9001 (جودة) و 45001 (سلامة).",
+        k: "ISO = معايير عالمية."
+    },
+    {
+        icon: "👷",
+        q: "ما هي HSE Plan [إتش-إس-إي]؟",
+        o: ["خطة السلامة والصحة والبيئة", "خطة الجدول", "خطة الشراء", "خطة الصيانة"],
+        e: "خطة حماية العمال والبيئة.",
+        k: "S = Safety (سلامة)."
+    },
+    {
+        icon: "📊",
+        q: "ما هو Log / Tracker [لوج]؟",
+        o: ["سجل متابعة المستندات", "جهاز مساحة", "ونش", "برنامج محاسبة"],
+        e: "ملف لتتبع حالة الورق (مقبول/مرفوض).",
+        k: "Tracker = متتبع."
+    },
+    {
+        icon: "📝",
+        q: "ما هو MAR (Material Approval Request) [إم-إيه-آر]؟",
+        o: ["طلب اعتماد مادة", "طلب إجازة", "تقرير حادث", "سلفة"],
+        e: "اسم آخر لـ Material Submittal.",
+        k: "Approval = اعتماد."
+    },
+    {
+        icon: "📏",
+        q: "ما هي Shop Drawings [شوب دروينج]؟",
+        o: ["مخططات تنفيذية تفصيلية", "مخططات تصميم", "مخططات بلدية", "صور"],
+        e: "الرسومات التي توضح تفاصيل التركيب.",
+        k: "Shop = ورشة."
+    },
+    {
+        icon: "💰",
+        q: "ما هو IPC (Interim Payment Certificate) [آي-بي-سي]؟",
+        o: ["مستخلص جاري (دفعة مالية)", "شهادة استلام", "شهادة ضمان", "خبرة"],
+        e: "شهادة صرف الدفعات الشهرية.",
+        k: "Payment = دفع."
+    },
+    {
+        icon: "🔄",
+        q: "ما هو VO (Variation Order) [فارييشن]؟",
+        o: ["أمر تغيير (زيادة/نقص)", "أمر إداري", "أمر صرف", "أمر توريد"],
+        e: "تغيير في نطاق العمل.",
+        k: "Variation = تغيير."
+    },
+    {
+        icon: "🤝",
+        q: "ما هو TOC (Taking Over Certificate) [تي-أو-سي]؟",
+        o: ["شهادة الاستلام الابتدائي", "بداية مشروع", "دفع", "جودة"],
+        e: "استلام المشروع من المقاول.",
+        k: "Taking Over = استلام."
+    },
+    {
+        icon: "📝",
+        q: "ما هي Snag List [سناج ليست]؟",
+        o: ["قائمة الملاحظات النهائية", "قائمة طعام", "قائمة موردين", "حضور"],
+        e: "قائمة العيوب البسيطة قبل التسليم.",
+        k: "Snag = عيب بسيط."
+    },
+    {
+        icon: "⏳",
+        q: "ما هو EOT (Extension of Time) [إي-أو-تي]؟",
+        o: ["طلب تمديد وقت المشروع", "توصيلة كهرباء", "تمديد إجازة", "زيادة عمال"],
+        e: "طلب وقت إضافي مبرر.",
+        k: "Extension = تمديد."
+    },
+    {
+        icon: "⚖️",
+        q: "ما هو Claim [كليم]؟",
+        o: ["مطالبة (تعويض مالي/زمني)", "إعلان", "خصم", "هدية"],
+        e: "المطالبة بحق الشركة نتيجة ضرر.",
+        k: "Claim = يطالب."
+    },
+    {
+        icon: "👀",
+        q: "ما هي SIN (Site Inspection Notice) [سين]؟",
+        o: ["ملاحظة تفتيش موقعية", "غياب", "خصم", "وصول مواد"],
+        e: "تنبيه من الاستشاري.",
+        k: "Notice = تنبيه."
+    },
+    {
+        icon: "📜",
+        q: "ما هو LOA (Letter of Award) [إل-أو-إيه]؟",
+        o: ["خطاب الترسية (فوز بالمشروع)", "لفت نظر", "شكر", "استقالة"],
+        e: "إشعار الفوز بالمناقصة.",
+        k: "Award = جائزة."
+    },
+    {
+        icon: "📖",
+        q: "ما هو ITB (Instruction to Bidders) [آي-تي-بي]؟",
+        o: ["تعليمات المناقصة", "تعليمات سلامة", "تشغيل", "صيانة"],
+        e: "قواعد التقديم للعطاء.",
+        k: "Bidders = متناقصين."
+    },
+    {
+        icon: "💼",
+        q: "ما هو PSL - Proposal [بروبوزال]؟",
+        o: ["المقترح أو العرض المقدم", "رفض", "شكوى", "استقالة"],
+        e: "العرض الفني والمالي.",
+        k: "Proposal = اقتراح/عرض."
+    },
+    {
+        icon: "📬",
+        q: "ما هو DTN (Document Transmittal Note)؟",
+        o: ["مذكرة إرسال (نفس Transmittal)", "مذكرة تفاهم", "مذكرة غياب", "دفع"],
+        e: "اسم آخر لنموذج الإرسال.",
+        k: "Note = مذكرة."
+    },
+    {
+        icon: "❌",
+        q: "ما معنى Status Code C؟",
+        o: ["مرفوض / أعد التقديم", "مقبول", "ملاحظات", "للمعلومات"],
+        e: "الرفض الكامل للمستند.",
+        k: "C = Cancelled/Change (مرفوض)."
+    },
+    {
+        icon: "⚠️",
+        q: "ما معنى Status Code B؟",
+        o: ["مقبول مع ملاحظات", "مقبول", "مرفوض", "ملغي"],
+        e: "موافقة مشروطة.",
+        k: "B = But (ولكن/ملاحظات)."
+    },
+    {
+        icon: "✅",
+        q: "ما معنى Status Code A؟",
+        o: ["مقبول (Approved)", "مرفوض", "ملاحظات", "تحت الدراسة"],
+        e: "موافقة تامة.",
+        k: "A = Approved."
+    }
+    ];
+
+    // --- منطق الكويز ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    let questions = [];
+    let currentIdx = 0;
+    let score = 0;
+
+    function startQuiz() {
+        questions = JSON.parse(JSON.stringify(database));
+        shuffleArray(questions);
+        
+        questions.forEach(q => {
+            const correctTxt = q.o[0]; 
+            shuffleArray(q.o);
+            q.correctIdx = q.o.indexOf(correctTxt);
+        });
+
+        document.getElementById('total-q').innerText = questions.length;
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const q = questions[currentIdx];
+        document.getElementById('curr-q').innerText = currentIdx + 1;
+        
+        let qHTML = q.q.replace(/\(([^)]+)\)/, '<span style="color:#0056b3">($1)</span>');
+        qHTML = qHTML.replace(/\[([^\]]+)\]/, '<span class="pronunciation">[$1]</span>');
+        
+        document.getElementById('question-text').innerHTML = q.icon + " " + qHTML;
+        
+        const optDiv = document.getElementById('options-container');
+        optDiv.innerHTML = '';
+        
+        q.o.forEach((opt, idx) => {
+            const btn = document.createElement('button');
+            btn.className = 'opt-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(idx, btn);
+            optDiv.appendChild(btn);
+        });
+
+        document.getElementById('explanation-box').style.display = 'none';
+        document.getElementById('next-btn').disabled = true;
+    }
+
+    function checkAnswer(idx, btn) {
+        const q = questions[currentIdx];
+        const btns = document.querySelectorAll('.opt-btn');
+        btns.forEach(b => b.disabled = true);
+
+        if(idx === q.correctIdx) {
+            btn.classList.add('correct');
+            score++;
+        } else {
+            btn.classList.add('wrong');
+            btns[q.correctIdx].classList.add('correct');
+        }
+
+        document.getElementById('score').innerText = score;
+        document.getElementById('exp-text').innerText = "💡 " + q.e;
+        
+        const memKey = document.getElementById('mem-key');
+        if(q.k) {
+            memKey.innerText = "🔑 مفتاح الحفظ: " + q.k;
+            memKey.style.display = 'block';
+        } else {
+            memKey.style.display = 'none';
+        }
+        
+        document.getElementById('explanation-box').style.display = 'block';
+        document.getElementById('next-btn').disabled = false;
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        if(currentIdx < questions.length) {
+            showQuestion();
+        } else {
+            document.getElementById('quiz-screen').style.display = 'none';
+            document.getElementById('end-screen').style.display = 'block';
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-total').innerText = questions.length;
+            
+            const percentage = (score / questions.length) * 100;
+            let msg = "";
+            if(percentage >= 90) msg = "أنت أسطورة! جاهز تكون مدير مشروع. 🌟";
+            else if(percentage >= 75) msg = "مستوى ممتاز! استمر. 🚀";
+            else msg = "تحتاج مراجعة بسيطة، حاول مرة أخرى! 💪";
+            document.getElementById('feedback-msg').innerText = msg;
+        }
+    }
+</script>
+</body>
+</html>
